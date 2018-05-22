@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var logger = require('morgan');
 var favicon = require('serve-favicon');
 var partials = require('express-partials');
+var methodOverride = require('method-override');
 
 
 var indexRouter = require('./routes/index');
@@ -24,6 +25,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(partials());
+app.use(methodOverride('__method' , { methods: ["POST", "GET"] }));
+
 
 app.use('/', indexRouter);
 

@@ -1,4 +1,4 @@
-var Quiz = require("./quiuz");
+var Quiz = require("./quiz");
 
 
 exports.Quiz = Quiz;

@@ -1,8 +1,7 @@
 const Sequelize = require("sequelize");
-const models = require("../models");
+const {models} = require("../models");
 
-
-// Autoload el quiz asociado a :quizId
+// Autoload the quiz with id equals to :quizId
 exports.load = (req, res, next, quizId) => {
 
     models.quiz.findById(quizId)
@@ -35,7 +34,6 @@ exports.show = (req, res, next) => {
     const {quiz} = req;
 
     res.render('quizzes/show', {quiz});
-
 };
 
 
@@ -62,14 +60,21 @@ exports.create = (req, res, next) => {
 
     // Saves only the fields question and answer into the DDBB
     quiz.save({fields: ["question", "answer"]})
-        .then(quiz => res.redirect('/quizzes/' + quiz.id))
+        .then(quiz => {
+            req.flash('success', 'Quiz created successfully.');
+            res.redirect('/quizzes/' + quiz.id);
+        })
         .catch(Sequelize.ValidationError, error => {
-            console.log('There are errors in the form:');
-            error.errors.forEach(({message}) => console.log(message));
+            req.flash('error', 'There are errors in the form:');
+            error.errors.forEach(({message}) => req.flash('error', message));
             res.render('quizzes/new', {quiz});
         })
-        .catch(error => next(error));
+        .catch(error => {
+            req.flash('error', 'Error creating a new Quiz: ' + error.message);
+            next(error);
+        });
 };
+
 
 // GET /quizzes/:quizId/edit
 exports.edit = (req, res, next) => {
@@ -89,13 +94,19 @@ exports.update = (req, res, next) => {
     quiz.answer = body.answer;
 
     quiz.save({fields: ["question", "answer"]})
-        .then(quiz => res.redirect('/quizzes/' + quiz.id))
+        .then(quiz => {
+            req.flash('success', 'Quiz edited successfully.');
+            res.redirect('/quizzes/' + quiz.id);
+        })
         .catch(Sequelize.ValidationError, error => {
-            console.log('There are errors in the form:');
-            error.errors.forEach(({message}) => console.log(message));
+            req.flash('error', 'There are errors in the form:');
+            error.errors.forEach(({message}) => req.flash('error', message));
             res.render('quizzes/edit', {quiz});
         })
-        .catch(error => next(error));
+        .catch(error => {
+            req.flash('error', 'Error editing the Quiz: ' + error.message);
+            next(error);
+        });
 };
 
 
@@ -103,8 +114,14 @@ exports.update = (req, res, next) => {
 exports.destroy = (req, res, next) => {
 
     req.quiz.destroy()
-        .then(() => res.redirect('/quizzes'))
-        .catch(error => next(error));
+        .then(() => {
+            req.flash('success', 'Quiz deleted successfully.');
+            res.redirect('/quizzes');
+        })
+        .catch(error => {
+            req.flash('error', 'Error deleting the Quiz: ' + error.message);
+            next(error);
+        });
 };
 
 
@@ -128,7 +145,6 @@ exports.check = (req, res, next) => {
     const {quiz, query} = req;
 
     const answer = query.answer || "";
-
     const result = answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim();
 
     res.render('quizzes/result', {
